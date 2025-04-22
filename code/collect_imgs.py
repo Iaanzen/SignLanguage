@@ -42,6 +42,14 @@ def draw_styled_landmarks(image, results):
                               mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),# Muda os atributos dos landmarks
                               mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=1,circle_radius=1))# muda os atributos das conexões
 
+
+def extract_keypoints(results):
+    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
+    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
+    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
+    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
+    return np.concatenate([pose, face, lh, rh])
+
 cap = cv2.VideoCapture(0)
 with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
     while cap.isOpened():
@@ -50,6 +58,9 @@ with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=
 
         # Indentificação das imagens
         image, results = mediapipe_detection(frame, holistic)
+
+        keypoints = extract_keypoints(results)
+
 
         # Exibe a câmera se ela for encontrada
         draw_styled_landmarks(image, results)
