@@ -1,28 +1,24 @@
-import pickle
+import os.path
 
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+from tensorflow.keras.utils import to_categorical
 
+from code.create_dataset import actions, no_sequences, sequence_length, DATA_PATH
 
-data_dict = pickle.load(open('./data.pickle', 'rb'))
+label_map = {label:num for num, label in enumerate(actions)}
 
-data = np.asarray(data_dict['data'])
-labels = np.asarray(data_dict['labels'])
+sequences, labels = [], []
+for action in actions:
+    for sequence in range(no_sequences):
+        window = []
+        for frame_num in range(sequence_length):
+            res = np.load(os.path.join(DATA_PATH, action, str(sequence), "{}.npy".format(frame_num)))
+            window.append(res)
+        sequences.append(window)
+        labels.append(label_map[action])
 
-x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, shuffle=True, stratify=labels)
+X = np.array(sequences)
+y = to_categorical(labels).astype(int)
 
-model = RandomForestClassifier()
-
-model.fit(x_train, y_train)
-
-y_predict = model.predict(x_test)
-
-score = accuracy_score(y_predict, y_test)
-
-print('{}% das samples foram classificadas corretamente!'.format(score * 100))
-
-f = open('model.p', 'wb')
-pickle.dump({'model': model}, f)
-f.close()
+X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.05)
