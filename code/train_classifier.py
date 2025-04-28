@@ -4,12 +4,12 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.utils import to_categorical
 
-from code.create_dataset import actions, no_sequences, sequence_length, DATA_PATH
+from code.create_dataset import custom_actions, no_sequences, sequence_length, DATA_PATH
 
-label_map = {label:num for num, label in enumerate(actions)}
+label_map = {label:num for num, label in enumerate(custom_actions)}
 
 sequences, labels = [], []
-for action in actions:
+for action in custom_actions:
     for sequence in range(no_sequences):
         window = []
         for frame_num in range(sequence_length):
@@ -21,4 +21,4 @@ for action in actions:
 X = np.array(sequences)
 y = to_categorical(labels).astype(int)
 
-X_train, X_test, y_train, y_test = train_test_split(X,y, test_size=0.05)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=labels, random_state=42)
