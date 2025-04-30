@@ -49,3 +49,5 @@ model.fit(X_train, y_train,
           callbacks=[early_stopping])
 
 print(model.summary())
+model.save('action.h5')
+print("Modelo salvo como 'action.h5'")
