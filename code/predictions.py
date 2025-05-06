@@ -1,8 +1,8 @@
 import numpy as np
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
 from code.create_dataset import custom_actions
-from code.inference_classifier import model
-from code.train_classifier import X_test, y_test
+from code.train_classifier import model
+from code.keypoint_collector import X_test, y_test
 import matplotlib.pyplot as plt
 
 y_true = [np.argmax(y) for y in y_test]
