@@ -1,72 +1,39 @@
 import os
+
 import cv2
-import numpy as np
-from matplotlib import pyplot as plt
-import time
-import mediapipe as mp
-
-mp_holistic = mp.solutions.holistic  # Modelo Holístico
-mp_drawing = mp.solutions.drawing_utils  # Propriedades dos desenhos
-mp_face_mesh = mp.solutions.face_mesh
 
 
-def mediapipe_detection(image, model):
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # Converte BGR para RGB
-    image.flags.writeable = False  # Não pode mais ser editada
-    results = model.process(image)  # Faz previsão e identificação das imagens
-    image.flags.writeable = True  # Pode ser editada de novo
-    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)  # Converte de novo de RGB para BGR
-    return image, results  # Traz os resultados
+DATA_DIR = './data'
+if not os.path.exists(DATA_DIR):
+    os.makedirs(DATA_DIR)
 
-def draw_landmarks(image, results):
-    mp_drawing.draw_landmarks(image, results.face_landmarks, mp_face_mesh.FACEMESH_CONTOURS) #Desenha landmarks do rosto
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS) #Desenha landmarkls de pose
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks, mp_holistic.HAND_CONNECTIONS) #desenha landmarks da mão esquerda
-    mp_drawing.draw_landmarks(image, results.right_hand_landmarks, mp_holistic.HAND_CONNECTIONS) #Desenha landmarks da mão direita
-
-def draw_styled_landmarks(image, results):
-    # Desenha landmarks do rosto
-    mp_drawing.draw_landmarks(image, results.face_landmarks,mp_face_mesh.FACEMESH_CONTOURS,
-                              mp_drawing.DrawingSpec(color=(80,110,10), thickness=1, circle_radius=1), #Muda os atributos dos landmarks
-                              mp_drawing.DrawingSpec(color=(80,256,121), thickness=1, circle_radius=1)) #muda os atributos das conexões
-    # Desenha landmarkls de pose
-    mp_drawing.draw_landmarks(image, results.pose_landmarks, mp_holistic.POSE_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(80, 22, 10), thickness=1, circle_radius=1),# Muda os atributos dos landmarks
-                              mp_drawing.DrawingSpec(color=(80, 44, 121), thickness=1,circle_radius=1))# muda os atributos das conexões
-    # desenha landmarks da mão esquerda
-    mp_drawing.draw_landmarks(image, results.left_hand_landmarks,mp_holistic.HAND_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(121, 22, 76), thickness=2, circle_radius=2),# Muda os atributos dos landmarks
-                              mp_drawing.DrawingSpec(color=(121, 44, 250), thickness=1,circle_radius=1))# muda os atributos das conexões
-    # Desenha landmarks da mão direita
-    mp_drawing.draw_landmarks(image, results.right_hand_landmarks,mp_holistic.HAND_CONNECTIONS,
-                              mp_drawing.DrawingSpec(color=(245, 117, 66), thickness=2, circle_radius=2),# Muda os atributos dos landmarks
-                              mp_drawing.DrawingSpec(color=(245, 66, 230), thickness=1,circle_radius=1))# muda os atributos das conexões
-
-
-def extract_keypoints(results):
-    pose = np.array([[res.x, res.y, res.z, res.visibility] for res in results.pose_landmarks.landmark]).flatten() if results.pose_landmarks else np.zeros(33*4)
-    face = np.array([[res.x, res.y, res.z] for res in results.face_landmarks.landmark]).flatten() if results.face_landmarks else np.zeros(468*3)
-    lh = np.array([[res.x, res.y, res.z] for res in results.left_hand_landmarks.landmark]).flatten() if results.left_hand_landmarks else np.zeros(21*3)
-    rh = np.array([[res.x, res.y, res.z] for res in results.right_hand_landmarks.landmark]).flatten() if results.right_hand_landmarks else np.zeros(21*3)
-    return np.concatenate([pose, face, lh, rh])
+number_of_classes = 25
+dataset_size = 200
 
 cap = cv2.VideoCapture(0)
-with mp_holistic.Holistic(min_detection_confidence=0.5, min_tracking_confidence=0.5) as holistic:
-    while cap.isOpened():
-        # Procura a câmera
+for j in range(number_of_classes):
+    if not os.path.exists(os.path.join(DATA_DIR, str(j))):
+        os.makedirs(os.path.join(DATA_DIR, str(j)))
+
+    print('Collecting data for class {}'.format(j))
+
+    done = False
+    while True:
         ret, frame = cap.read()
-
-        # Indentificação das imagens
-        image, results = mediapipe_detection(frame, holistic)
-
-        keypoints = extract_keypoints(results)
-
-
-        # Exibe a câmera se ela for encontrada
-        draw_styled_landmarks(image, results)
-        cv2.imshow('OpenCV Feed', image)
-        # Quebra o loop se apertar 'q'
-        if cv2.waitKey(10) & 0xFF == ord('q'):
+        cv2.putText(frame, 'Ready? Press "Q" ! :)', (100, 50), cv2.FONT_HERSHEY_SIMPLEX, 1.3, (0, 255, 0), 3,
+                    cv2.LINE_AA)
+        cv2.imshow('frame', frame)
+        if cv2.waitKey(25) == ord('q'):
             break
+
+    counter = 0
+    while counter < dataset_size:
+        ret, frame = cap.read()
+        cv2.imshow('frame', frame)
+        cv2.waitKey(25)
+        cv2.imwrite(os.path.join(DATA_DIR, str(j), '{}.jpg'.format(counter)), frame)
+
+        counter += 1
+
 cap.release()
 cv2.destroyAllWindows()
