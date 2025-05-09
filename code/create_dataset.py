@@ -46,7 +46,7 @@ for dir_ in os.listdir(DATA_DIR):
                 data.append(data_aux)
                 labels.append(dir_)
             else:
-                print(f"Imagem ignorada: {img_path}, vetor com {len(data_aux)} elementos")
+                print(f"Imagens ignoradas: {img_path}, vetor com {len(data_aux)} elementos")
 
 f = open('data.pickle', 'wb')
 pickle.dump({'data': data, 'labels': labels}, f)
